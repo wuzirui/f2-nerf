@@ -10,6 +10,15 @@
 #include "../Utils/GlobalDataPool.h"
 #include "../Common.h"
 
+/*
+SampleResultFlex: This struct represents the result of a sampling operation. It includes several torch tensors:
+
+pts and dirs represent 3D points and directions respectively, each for n_all_pts points.
+t and dt represent ray-depth and difference of ray-depth
+anchors could represent reference points for each point in pts.
+pts_idx_bounds might be used to store the near and far distance
+first_oct_dis is likely related to some form of distance metric, but it's unclear without additional context.
+*/
 struct SampleResultFlex {
   using Tensor = torch::Tensor;
   Tensor pts;                           // [ n_all_pts, 3 ]
@@ -38,6 +47,9 @@ public:
     return { Tensor(), Tensor() };
   }
 
+  /*
+  updates the octree structure based on the sampled points, weights, and alpha values.
+  */
   virtual void UpdateOctNodes(const SampleResultFlex& sample_result,
                               const Tensor& sampled_weights,
                               const Tensor& sampled_alpha) {

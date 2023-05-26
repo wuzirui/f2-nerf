@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "run f2nerf",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/run.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--config-name",
+                "wanjinyou",
+                "dataset_name=kitti",
+                "case_name=kitti_turning_example",
+                "mode=train",
+                "+work_dir=/DATA_EDS/wuzr/f2-nerf"
+            ]
+        },
+        {
+            "name": "colmap2poses",
+            "type": "python",
+            "request": "launch",
+            "program": "scripts/colmap2poses.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--data_dir",
+                "./data/kitti/kitti_turning_example"
+            ]
+        }
+    ]
+}

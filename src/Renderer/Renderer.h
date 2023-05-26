@@ -15,6 +15,9 @@
 #include "../Shader/ShaderFactory.h"
 #include "../PtsSampler/PtsSamplerFactory.h"
 
+/*
+  RenderResult is a struct that defines the output of the rendering process. It consists of various Torch tensors such as colors, first_oct_dis, disparity, edge_feats, depth, weights, and idx_start_end. Each tensor probably represents a different component of the rendering output.
+*/
 struct RenderResult {
   using Tensor = torch::Tensor;
   Tensor colors;
@@ -25,25 +28,26 @@ struct RenderResult {
   Tensor weights;
   Tensor idx_start_end;
 };
-/*
-struct VolumeRenderInfoPool {
-  using Tensor = torch::Tensor;
-  // Volume renderer input data
-  Tensor sampled_density;
-  Tensor sampled_color;
-  Tensor bg_color;
-  float distortion_weight_;
-  // Volume renderer side product
-  Tensor cum_density;
-  Tensor trans;
-  Tensor weight;
-};*/
 
+/*
+  VolumeRenderInfo is a class that extends torch::CustomClassHolder, a base class provided by PyTorch for user-defined classes. This class contains a pointer to a SampleResultFlex (in PtsSampler.h) object.
+*/
 class VolumeRenderInfo : public torch::CustomClassHolder {
 public:
   SampleResultFlex* sample_result;
 };
 
+/*
+Renderer is a class that extends Pipe. It has various member functions and fields:
+
+Render is a member function that takes in tensors representing the origins of rays (rays_o), directions of rays (rays_d), bounds, and emb_idx, and returns a RenderResult.
+
+global_data_pool_, pts_sampler_, scene_field_, and shader_ are pointers to different objects. The unique_ptr is a smart pointer that retains sole ownership of an object through a pointer and destroys that object when the unique_ptr goes out of scope.
+
+use_app_emb_ is a boolean variable which might indicate whether to use a certain type of embedding, and app_emb_ is a tensor that could store the embedding.
+
+bg_color_type_ is an enumeration that indicates the type of background color. It could be white, black, or random noise.
+*/
 class Renderer : public Pipe {
   using Tensor = torch::Tensor;
 

@@ -114,6 +114,7 @@ RenderResult Renderer::Render(const Tensor& rays_o, const Tensor& rays_d, const 
 
     Tensor scene_feat = scene_field_->AnchoredQuery(pts, anchors);
     Tensor sampled_density = DensityAct(scene_feat.index({ Slc(), Slc(0, 1) }));
+    // Slc==':', sampled_density = DensityAct(scene_feat[:, 0:1])
 
     Tensor sampled_dt = sample_result_.dt;
     Tensor sampled_t = (sample_result_.t + 1e-2f).contiguous();
