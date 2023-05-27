@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 project(f2nerf
         VERSION 0.1
         LANGUAGES CUDA CXX)
@@ -55,6 +55,9 @@ include(src/Renderer/renderer.cmake)
 include(src/Shader/shader.cmake)
 include(src/Utils/utils.cmake)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 list(APPEND SRC_ALL
         ${SRC_FIELD}
         ${SRC_DATASET}
@@ -67,7 +70,7 @@ list(APPEND SRC_ALL
 list(APPEND SRC_ALL src/ExpRunner.cpp)
 
 
-set(ALL_LIBS ${TORCH_LIBRARIES} ${TORCH_CUDA_LIBRARIES} ${ZLIB_LIBRARIES} yaml-cpp fmt::fmt)
+set(ALL_LIBS ${TORCH_LIBRARIES} ${TORCH_CUDA_LIBRARIES} ${ZLIB_LIBRARIES} yaml-cpp fmt::fmt Threads::Threads)
 set(ALL_LIBS ${ALL_LIBS} tiny-cuda-nn stdc++fs)
 
 # ------------------------------------ Add executables ---------------------------------------
