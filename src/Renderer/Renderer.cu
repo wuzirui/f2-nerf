@@ -5,6 +5,7 @@
 
 using Tensor = torch::Tensor;
 
+// out_cnt: the valid points in mask
 __global__ void CountValidPts(int n_rays, int* idx_bounds, int* mask, int* out_cnt) {
   int ray_idx = LINEAR_IDX();
   if (ray_idx >= n_rays) return;
@@ -17,6 +18,7 @@ __global__ void CountValidPts(int n_rays, int* idx_bounds, int* mask, int* out_c
   out_cnt[ray_idx] = cnt;
 }
 
+// return bounds of each ray
 torch::Tensor FilterIdxBounds(const torch::Tensor& idx_bounds,
                               const torch::Tensor& mask) {
   int n_rays = idx_bounds.size(0);
@@ -34,14 +36,17 @@ torch::Tensor FilterIdxBounds(const torch::Tensor& idx_bounds,
   // Tensor sorted_idx_bounds = idx_bounds.clone().contiguous();
   Tensor mask_int = mask.to(torch::kInt32).contiguous();
 
+  // cumulative count of valid points for each ray
   Tensor valid_cnt = torch::zeros({ n_rays }, CUDAInt);
   dim3 grid_dim = LIN_GRID_DIM(n_rays);
   dim3 block_dim = LIN_BLOCK_DIM(n_rays);
+  // run CountValidPts with kernel <<<grid_dim, block_dim>>>
   CountValidPts<<<grid_dim, block_dim>>>(n_rays,
                                          idx_bounds.data_ptr<int>(),
                                          mask_int.data_ptr<int>(),
                                          valid_cnt.data_ptr<int>());
   valid_cnt = torch::cumsum(valid_cnt, 0);
+  // start and end index of each ray
   Tensor new_idx_bounds = torch::zeros({ n_rays, 2 }, CUDAInt);
   new_idx_bounds.index_put_({Slc(), 1}, valid_cnt);
   new_idx_bounds.index_put_({Slc(1, None), 0}, valid_cnt.index({Slc(0, -1)}));
