@@ -55,6 +55,7 @@ RenderResult Renderer::Render(const Tensor& rays_o, const Tensor& rays_d, const 
   ScopeWatch watch(__func__);
 #endif
   int n_rays = rays_o.sizes()[0];
+  // pts_sampler_->GetSamples
   sample_result_ = pts_sampler_->GetSamples(rays_o, rays_d, bounds);
   int n_all_pts = sample_result_.pts.sizes()[0];
   float sampled_pts_per_ray = float(n_all_pts) / float(n_rays);
@@ -81,6 +82,7 @@ RenderResult Renderer::Render(const Tensor& rays_o, const Tensor& rays_d, const 
     bg_color = torch::zeros({n_rays, 3}, CUDAFloat);
   }
 
+  // no points sampled, return background color
   if (n_all_pts <= 0) {
     Tensor colors = bg_color;
     if (global_data_pool_->mode_ == RunningMode::TRAIN) {
@@ -98,6 +100,7 @@ RenderResult Renderer::Render(const Tensor& rays_o, const Tensor& rays_d, const 
   }
   CHECK_EQ(rays_o.sizes()[0], sample_result_.pts_idx_bounds.sizes()[0]);
 
+  // exp(truncate(x - 3))[0] ?
   auto DensityAct = [](Tensor x) -> Tensor {
     const float shift = 3.f;
     return torch::autograd::TruncExp::apply(x - shift)[0];
@@ -134,16 +137,18 @@ RenderResult Renderer::Render(const Tensor& rays_o, const Tensor& rays_d, const 
     sample_result_early_stop.anchors = sample_result_.anchors.index({mask_idx}).contiguous();
 
     sample_result_early_stop.first_oct_dis = sample_result_.first_oct_dis.clone();
+    // cuda calculate bounds
     sample_result_early_stop.pts_idx_bounds = FilterIdxBounds(sample_result_.pts_idx_bounds, mask);
 
     CHECK_EQ(sample_result_early_stop.pts_idx_bounds.max().item<int>(), sample_result_early_stop.pts.size(0));
 
-
+    // update octree & meaningful_sampled_pts_per_ray_
     if (global_data_pool_->mode_ == RunningMode::TRAIN) {
       pts_sampler_->UpdateOctNodes(sample_result_,
                                    weights.detach(),
                                    alphas.detach());
 
+      // sum of mask elements / n_rays
       float meaningful_per_ray = mask.to(torch::kFloat32).sum().item<float>();
       meaningful_per_ray /= n_rays;
       global_data_pool_->meaningful_sampled_pts_per_ray_ =
