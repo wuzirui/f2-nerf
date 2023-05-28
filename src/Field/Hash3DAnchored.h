@@ -27,6 +27,7 @@ Hash table.
   - bias_pool_: according to the f2-nerf paper, each leaf node has its own hash functions. The bias pool here stores the addends of the hash functions (equation 2).
   - feat_local_idx_: the starting indexes of each level in the hash table.
   - feat_local_size_: the length of each level in the hash table.
+  - mlp_: the feature decoder.
 */
   using Tensor = torch::Tensor;
 public:

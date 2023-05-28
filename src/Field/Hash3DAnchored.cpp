@@ -104,6 +104,9 @@ Tensor Hash3DAnchored::AnchoredQuery(const Tensor& points, const Tensor& anchors
 
   query_points_ = ((points + 1.f) * .5f).contiguous();   // [-1, 1] -> [0, 1]
   query_volume_idx_ = anchors.contiguous();
+  std::cout << __FILE_NAME__ << ":" << __LINE__ << " points.shape = " << points.sizes() << std::endl;   // [21638, 3]
+  std::cout << __FILE_NAME__ << ":" << __LINE__ << " anchors.shape = " << anchors.sizes() << std::endl; //  [21638]
+  
   info->hash3d_ = this;
 
   // torch::IValue is used to wrap an info object that contains a pointer to a Hash3DAnchored instance. This object is passed as an argument to the torch::autograd::Hash3DAnchoredFunction::apply function, which returns a list of IValues.

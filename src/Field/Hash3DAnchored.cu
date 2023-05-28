@@ -17,11 +17,11 @@ __global__ void Hash3DAnchoredForwardKernel(int n_points, int n_volumes,
   int pts_idx = blockIdx.x * blockDim.x + threadIdx.x;
   int level_idx = blockIdx.y;
   if (pts_idx >= n_points) {
-    return;
+    return;   // out of range, nothing to do.
   }
 
-  points_ptr  = points_ptr + pts_idx;
-  volume_idx = volume_idx + pts_idx;
+  points_ptr  = points_ptr + pts_idx;                       // point
+  volume_idx = volume_idx + pts_idx;                        // anchor
   out_feat = out_feat + pts_idx * (N_LEVELS * N_CHANNELS);
 
   Wec3f pt = points_ptr[0];
@@ -41,6 +41,7 @@ __global__ void Hash3DAnchoredForwardKernel(int n_points, int n_volumes,
   pt = pt + bias_pool[transf_idx];
 
 
+  // calculate the hash indices of the eight surrounding nodes
   auto pos_x = static_cast<unsigned>(floorf(pt[0]));
   auto pos_y = static_cast<unsigned>(floorf(pt[1]));
   auto pos_z = static_cast<unsigned>(floorf(pt[2]));
@@ -59,6 +60,7 @@ __global__ void Hash3DAnchoredForwardKernel(int n_points, int n_volumes,
   float b = pt[1] - floorf(pt[1]);
   float c = pt[2] - floorf(pt[2]);
 
+  // tri-linear interpolation weight
   float w000 = (1.f - a) * (1.f - b) * (1.f - c);
   float w001 = (1.f - a) * (1.f - b) * c;
   float w010 = (1.f - a) * b * (1.f - c);
@@ -69,6 +71,7 @@ __global__ void Hash3DAnchoredForwardKernel(int n_points, int n_volumes,
   float w111 = a * b * c;
 
 #pragma unroll
+  // perform tri-linear interpolation
   for (int k = 0; k < N_CHANNELS; k++) {
     out_feat[level_idx * N_CHANNELS + k] = (T) (
         w000 * float(feat_pool[pos_000 * N_CHANNELS + k]) + w001 * float(feat_pool[pos_001 * N_CHANNELS + k]) +
@@ -92,8 +95,8 @@ __global__ void Hash3DAnchoredBackwardKernel(int n_points, int n_volumes,
     return;
   }
 
-  points_ptr  = points_ptr + pts_idx;
-  volume_idx = volume_idx + pts_idx;
+  points_ptr  = points_ptr + pts_idx;     // point
+  volume_idx = volume_idx + pts_idx;      // anchor
   grad_in = grad_in + (N_LEVELS * N_CHANNELS) * pts_idx + level_idx * N_CHANNELS;
   Wec3f pt = points_ptr[0];
   float mul = exp2f((RES_FINE_POW_2 - RES_BASE_POW_2) * float(level_idx) / float(N_LEVELS - 1) + RES_BASE_POW_2);
