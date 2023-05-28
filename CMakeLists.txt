@@ -18,6 +18,8 @@ set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
 add_definitions(-DHALF_PRECISION)
 
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
 # tiny-cuda-nn
 add_definitions(-DJSON_HAS_CPP_14)
 set(TCNN_BUILD_BENCHMARK OFF)
